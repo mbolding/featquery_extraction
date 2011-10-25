@@ -1,4 +1,4 @@
-function Y = process_featquery()
+function Y = process_featquery2()
 % proccess featquery results from pvem experiment
 % mark.bolding@gmail.com
 
@@ -12,6 +12,7 @@ numsubs = length(subjectdirs);
 numruns = length(rundirs);
 numrois = length(roidirs);
 numpts = 162; % 162 vols in each run
+numzsts = 4;
 Y = zeros(numsubs,numruns,numrois,numpts);
 
 %% untangle zstats and evs
@@ -34,7 +35,7 @@ for subjectdir = subjectdirs'
         roiidx = 0;
         for roidir = roidirs'
             roiidx = roiidx +1;
-            datadir = strcat(subjectdir{1},filesep, rundir{1},filesep, roidir{1});
+            datadir = strcat(subjectdir{1}, filesep, rundir{1}, filesep, roidir{1});
             meandatafile = strcat(datadir, filesep, meandataname);
             if ~exist(meandatafile,'file')
                 disp(meandatafile)
