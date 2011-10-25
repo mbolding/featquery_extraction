@@ -2,9 +2,11 @@ function process_featquery2()
 % proccess featquery results from pvem experiment
 % mark.bolding@gmail.com
 
-RAWDATA = 5;
+RAWDATA = 2;
+PARTIALFIT = 3;
 MODELFIT = 4;
-datacoltype = RAWDATA;
+REDUCED = 5;
+datacoltype = REDUCED;
 stattype = 'maxzstat';
 
 %% directory and file name lists
@@ -111,8 +113,12 @@ Yrng = [-5 140];
 for roiidx = 1:numrois   
     subplot(numrois/2,2,roiidx)
     y = squeeze(Ymean(roiidx,:,:))';
-    y = y - repmat(y(1,:),size(y,1),1);
-    plot(0:2.5:39,y,[20 20], Yrng, 'k:')
+    y = y - repmat(y(1,:),size(y,1),1); % start them all at same point
+    t = 0:2.5:39;
+    plot(t,y)
+    hold on
+    plot([20 20], Yrng, 'k:')
+    hold off
 %     axis off
     roititle = roidirs{roiidx}(10:end-11);
     roititle = strrep(roititle,'_',' ');
