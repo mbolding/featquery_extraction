@@ -2,13 +2,19 @@ function process_featquery2()
 % proccess featquery results from pvem experiment
 % mark.bolding@gmail.com
 
-clf
+RAWDATA = 5;
+MODELFIT = 4;
+datacoltype = RAWDATA;
+stattype = 'maxzstat';
 
 %% directory and file name lists
+subjectdirs = {};
+rundirs = {};
+roidirs = {};
 importfilelist('subjectdirs.txt') % reads in list in subject dirs and assigns to var 'subjectdirs'
 importfilelist('rundirs.txt') % reads in list in run dirs and assigns to var 'rundirs'
 importfilelist('roidirs.txt') % reads in list in roi dirs and assigns to var 'roidirs'
-meandataname = 'mean_mask_ts.txt';
+% meandataname = 'mean_mask_ts.txt';
 
 numsubs = length(subjectdirs);
 numruns = length(rundirs);
@@ -19,14 +25,38 @@ Y = zeros(numsubs,numruns,numrois,numzsts,numpts);
 
 %% untangle zstats and evs
 tsplotdir = 'tsplot';
-pstpdatanames = {...
-    'ps_tsplotc_zstat1_ev1','ps_tsplotc_zstat2_ev2','ps_tsplotc_zstat3_ev3','ps_tsplotc_zstat4_ev4';...
-    'ps_tsplotc_zstat1_ev3','ps_tsplotc_zstat2_ev4','ps_tsplotc_zstat3_ev1','ps_tsplotc_zstat4_ev2';...
-    'ps_tsplotc_zstat1_ev1','ps_tsplotc_zstat2_ev3','ps_tsplotc_zstat3_ev2','ps_tsplotc_zstat4_ev4';...
-    'ps_tsplotc_zstat1_ev4','ps_tsplotc_zstat2_ev3','ps_tsplotc_zstat3_ev2','ps_tsplotc_zstat4_ev1';...
-    'ps_tsplotc_zstat1_ev3','ps_tsplotc_zstat2_ev1','ps_tsplotc_zstat3_ev4','ps_tsplotc_zstat4_ev2'};
+switch stattype
+    case 'clusterzstat'
+        pstpdatanames = {...
+            'ps_tsplotc_zstat1_ev1','ps_tsplotc_zstat2_ev3','ps_tsplotc_zstat3_ev5','ps_tsplotc_zstat4_ev7';...
+            'ps_tsplotc_zstat1_ev5','ps_tsplotc_zstat2_ev7','ps_tsplotc_zstat3_ev1','ps_tsplotc_zstat4_ev3';...
+            'ps_tsplotc_zstat1_ev1','ps_tsplotc_zstat2_ev5','ps_tsplotc_zstat3_ev3','ps_tsplotc_zstat4_ev7';...
+            'ps_tsplotc_zstat1_ev7','ps_tsplotc_zstat2_ev5','ps_tsplotc_zstat3_ev3','ps_tsplotc_zstat4_ev1';...
+            'ps_tsplotc_zstat1_ev5','ps_tsplotc_zstat2_ev1','ps_tsplotc_zstat3_ev7','ps_tsplotc_zstat4_ev3'};
+    case 'clusterzfstat'
+        pstpdatanames = {...
+            'ps_tsplotc_zfstat1_ev1','ps_tsplotc_zfstat1_ev3','ps_tsplotc_zfstat1_ev5','ps_tsplotc_zfstat1_ev7';...
+            'ps_tsplotc_zfstat1_ev5','ps_tsplotc_zfstat1_ev7','ps_tsplotc_zfstat1_ev1','ps_tsplotc_zfstat1_ev3';...
+            'ps_tsplotc_zfstat1_ev1','ps_tsplotc_zfstat1_ev5','ps_tsplotc_zfstat1_ev3','ps_tsplotc_zfstat1_ev7';...
+            'ps_tsplotc_zfstat1_ev7','ps_tsplotc_zfstat1_ev5','ps_tsplotc_zfstat1_ev3','ps_tsplotc_zfstat1_ev1';...
+            'ps_tsplotc_zfstat1_ev5','ps_tsplotc_zfstat1_ev1','ps_tsplotc_zfstat1_ev7','ps_tsplotc_zfstat1_ev3'};
+    case 'maxzfstat'
+        pstpdatanames = {...
+            'ps_tsplot_zfstat1_ev1','ps_tsplot_zfstat1_ev3','ps_tsplot_zfstat1_ev5','ps_tsplot_zfstat1_ev7';...
+            'ps_tsplot_zfstat1_ev5','ps_tsplot_zfstat1_ev7','ps_tsplot_zfstat1_ev1','ps_tsplot_zfstat1_ev3';...
+            'ps_tsplot_zfstat1_ev1','ps_tsplot_zfstat1_ev5','ps_tsplot_zfstat1_ev3','ps_tsplot_zfstat1_ev7';...
+            'ps_tsplot_zfstat1_ev7','ps_tsplot_zfstat1_ev5','ps_tsplot_zfstat1_ev3','ps_tsplot_zfstat1_ev1';...
+            'ps_tsplot_zfstat1_ev5','ps_tsplot_zfstat1_ev1','ps_tsplot_zfstat1_ev7','ps_tsplot_zfstat1_ev3'};
+    case 'maxzstat'
+        pstpdatanames = {...
+            'ps_tsplot_zstat1_ev1','ps_tsplot_zstat2_ev3','ps_tsplot_zstat3_ev5','ps_tsplot_zstat4_ev7';...
+            'ps_tsplot_zstat1_ev5','ps_tsplot_zstat2_ev7','ps_tsplot_zstat3_ev1','ps_tsplot_zstat4_ev3';...
+            'ps_tsplot_zstat1_ev1','ps_tsplot_zstat2_ev5','ps_tsplot_zstat3_ev3','ps_tsplot_zstat4_ev7';...
+            'ps_tsplot_zstat1_ev7','ps_tsplot_zstat2_ev5','ps_tsplot_zstat3_ev3','ps_tsplot_zstat4_ev1';...
+            'ps_tsplot_zstat1_ev5','ps_tsplot_zstat2_ev1','ps_tsplot_zstat3_ev7','ps_tsplot_zstat4_ev3'};
 
-zstsnames = {'sacc','spem','vergtr','vergest'};   
+end
+% zstsnames = {'sacc','spem','vergtr','vergst'};
 
 %% loop through all combinations and load data
 missingcount = 0;
@@ -48,12 +78,17 @@ for subjectdir = subjectdirs'
                     disp(['missing: ' pstpdatafile])
                     missingcount = missingcount +1;
                 else
+%                     fprintf('sub:%d, run:%d, roi:%d, %s:%d ',subidx,runidx,roiidx,stattype,zstidx)
                     pstpdata = load(pstpdatafile);
-                    pstpdata = pstpdata(:,4);
-                    pstpdata = sum(reshape(pstpdata,[],4),2)/4;
-                    plot(pstpdata)
-                    Y(subidx,runidx,roiidx,zstidx,:) = pstpdata;
-                    fprintf('sub:%d, run:%d, roi:%d, zstat:%d \n',subidx,runidx,roiidx,zstidx)
+                    if size(pstpdata,1) == 64;
+                        pstpdata = pstpdata(:,datacoltype); % load the data column from the psts file
+                        pstpdata = sum(reshape(pstpdata,[],4),2)/4;
+                        Y(subidx,runidx,roiidx,zstidx,:) = pstpdata;
+                    else
+                        fprintf('not enough pts ')
+                        disp(pstpdatafile)
+                    end
+%                     fprintf('sub:%d, run:%d, roi:%d, %s:%d \n',subidx,runidx,roiidx,stattype,zstidx)
                     usedcount = usedcount +1; 
                 end
             end
@@ -67,20 +102,23 @@ Ymean = squeeze(mean(Y,1)); % average over subjects
 Ymean = squeeze(mean(Ymean,1)); % average over runs
 
 %% save data
-save('Y.mat','Y','Ymean','numruns','numrois','numzsts','missingcount','usedcount','roidirs')
+datasavename = ['Y' stattype '.mat'];
+save(datasavename,'Y','Ymean','numruns','numrois','numzsts','missingcount','usedcount','roidirs')
 
 %% plot data
-
-for roiidx = 1:numrois
-    for zstidx = 1:numzsts
-        subplot(numrois,numzsts,zstidx+((roiidx-1)*numzsts))
-        y = squeeze(Ymean(roiidx,zstidx,:));
-        plot(y)
-        axis off
-        roititle = roidirs{roiidx}(10:end-11);
-        roititle = strrep(roititle,'_',' ');
-        title(sprintf('%s : %s',roititle,zstsnames{zstidx}))
-    end
+clf
+Yrng = [-5 140];
+for roiidx = 1:numrois   
+    subplot(numrois/2,2,roiidx)
+    y = squeeze(Ymean(roiidx,:,:))';
+    y = y - repmat(y(1,:),size(y,1),1);
+    plot(0:2.5:39,y,[20 20], Yrng, 'k:')
+%     axis off
+    roititle = roidirs{roiidx}(10:end-11);
+    roititle = strrep(roititle,'_',' ');
+    title(sprintf('%s',roititle))
+    ylim(Yrng)
 end
+legend('sacc','spem','vergtr','vergst','Location','Best')
 disp(['missing:' num2str(missingcount) '  used:' num2str(usedcount)])
 %% clean up

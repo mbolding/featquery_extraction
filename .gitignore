@@ -25,3 +25,9 @@ SS/
 ._.DS_Store
 
 ._.gitignore
+
+._clusterzfstatcol5.pdf
+
+*.mat
+Y.mat
+*.pdf
